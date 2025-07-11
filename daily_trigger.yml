@@ -1,0 +1,13 @@
+name: Daily Pigepm Trigger
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 台灣早上 8 點（UTC+8）
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Hugging Face Space
+        run: curl -s https://huggingface.co/spaces/kawlmlonq/pigepm-colab-autorun
