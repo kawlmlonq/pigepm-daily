@@ -30,9 +30,7 @@ async def scrape_pigepm():
         await browser.close()
         return farm_count, user_count
 
-# ====== 寫入 Google Sheet ======
 def write_to_sheet(farm, user):
-    import os
     creds, _ = google.auth.default()
     gc = gspread.authorize(creds)
 
@@ -53,7 +51,6 @@ def write_to_sheet(farm, user):
     format_cell_range(worksheet, 'A:A', fmt)
     print("✅ 資料已寫入 Google Sheet")
 
-# ====== 發送 Webhook 通知（可選）======
 def notify_gas(farm, user):
     GAS_URL = "https://script.google.com/macros/s/AKfycbylRiww5xOBR3ElecBOl1Qv5pYGApwVGxXvrbdgWYIid7bQWjdQ_S4Npk29ZBtRNhmL6A/exec"
     payload = {
@@ -64,8 +61,9 @@ def notify_gas(farm, user):
     r = requests.post(GAS_URL, json=payload)
     print("✅ 已通知 GAS，回應：", r.text)
 
-# 主程序
+# ✅ 主程序放最後
 if __name__ == "__main__":
+    print("🐷 Triggered: 程式啟動中...")  # ✅ Debug 標記
     farm, user = asyncio.run(scrape_pigepm())
     print("🐷 牧場數量：", farm)
     print("👥 使用者數量：", user)
