@@ -10,4 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Hugging Face Space
-        run: curl -s https://huggingface.co/spaces/kawlmlonq/pigepm-colab-autorun
+        run: curl -X POST https://kawlmlonq--pigepm-colab-autorun.hf.space/run
+
