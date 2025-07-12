@@ -1,9 +1,9 @@
-name: Pigepm Every 5 Minutes Test
+name: Pigepm Every 5 Minutes
 
 on:
   schedule:
     - cron: '*/5 * * * *'  # 每 5 分鐘執行一次
-  workflow_dispatch:       # 支援手動觸發
+  workflow_dispatch:
 
 jobs:
   run:
