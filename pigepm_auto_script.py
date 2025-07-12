@@ -2,16 +2,17 @@ from playwright.async_api import async_playwright
 import nest_asyncio
 import asyncio
 import gspread
-from google.oauth2.service_account import Credentials
+import os
+import json
 from datetime import datetime
 from gspread_formatting import *
 import requests
-import json
-import os
+from google.oauth2.service_account import Credentials
 
-# 確保 asyncio loop 可重複使用（for Colab/local 運行）
+# 確保 asyncio loop 可重複使用（for GitHub Actions / Colab）
 nest_asyncio.apply()
 
+# Playwright 擷取資料
 async def scrape_pigepm():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -32,14 +33,17 @@ async def scrape_pigepm():
         await browser.close()
         return farm_count, user_count
 
+# 寫入 Google Sheet
 def write_to_sheet(farm, user):
-    # 從 GitHub Secret 中取得 GCP 金鑰字串
-    creds_json = os.getenv("GCP_CREDENTIALS")
-    if creds_json is None:
-        raise RuntimeError("❌ GCP_CREDENTIALS 未設定，請確認 GitHub Secrets 設定")
+    print("📄 取得 Google Sheet 金鑰")
+    creds_json = os.environ.get("GCP_CREDENTIALS")
+
+    if not creds_json:
+        raise ValueError("❌ 未偵測到 GCP_CREDENTIALS，請確認 GitHub Secrets 設定正確")
 
     creds_dict = json.loads(creds_json)
-    creds = Credentials.from_service_account_info(creds_dict)
+    creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+
     gc = gspread.authorize(creds)
 
     SHEET_ID = "1BRfNr84btjJFPH9CXUiTMeojHGb16Y7vRf_D92kHKOU"
@@ -57,8 +61,10 @@ def write_to_sheet(farm, user):
 
     fmt = cellFormat(numberFormat=numberFormat(type='DATE_TIME', pattern='yyyy/MM/dd HH:mm:ss'))
     format_cell_range(worksheet, 'A:A', fmt)
+
     print("✅ 資料已寫入 Google Sheet")
 
+# 通知 GAS webhook（可略）
 def notify_gas(farm, user):
     GAS_URL = "https://script.google.com/macros/s/AKfycbylRiww5xOBR3ElecBOl1Qv5pYGApwVGxXvrbdgWYIid7bQWjdQ_S4Npk29ZBtRNhmL6A/exec"
     payload = {
@@ -69,9 +75,9 @@ def notify_gas(farm, user):
     r = requests.post(GAS_URL, json=payload)
     print("✅ 已通知 GAS，回應：", r.text)
 
-# ✅ 主程序放最後
+# 主程序
 if __name__ == "__main__":
-    print("🐷 Triggered: 程式啟動中...")
+    print("🚀 程式啟動中")
     farm, user = asyncio.run(scrape_pigepm())
     print("🐷 牧場數量：", farm)
     print("👥 使用者數量：", user)
