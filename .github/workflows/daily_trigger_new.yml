@@ -2,7 +2,7 @@ name: Pigepm Every 5 Minutes
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 每 5 分鐘執行一次
+    - cron: '0 0 * * *'  # 每天台灣時間 8:00（需額外調整）
   workflow_dispatch:
 
 jobs:
