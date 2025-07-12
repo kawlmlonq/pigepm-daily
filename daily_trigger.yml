@@ -1,14 +1,26 @@
-name: Daily Pigepm Trigger
+name: Pigepm Every 5 Minutes Test
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 每 5 分鐘（UTC） 
+    - cron: '*/5 * * * *'  # 每 5 分鐘
   workflow_dispatch:
 
 jobs:
-  trigger:
+  run:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Hugging Face Space
-        run: curl -X POST https://kawlmlonq--pigepm-colab-autorun.hf.space/run
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright gspread gspread-formatting google-auth nest_asyncio
+          playwright install chromium
+
+      - name: Run pigepm script
+        run: python pigepm_auto.py
