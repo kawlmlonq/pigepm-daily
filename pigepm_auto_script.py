@@ -2,10 +2,12 @@ from playwright.async_api import async_playwright
 import nest_asyncio
 import asyncio
 import gspread
-import google.auth
+from google.oauth2.service_account import Credentials
 from datetime import datetime
 from gspread_formatting import *
 import requests
+import json
+import os
 
 # 確保 asyncio loop 可重複使用（for Colab/local 運行）
 nest_asyncio.apply()
@@ -31,7 +33,13 @@ async def scrape_pigepm():
         return farm_count, user_count
 
 def write_to_sheet(farm, user):
-    creds, _ = google.auth.default()
+    # 從 GitHub Secret 中取得 GCP 金鑰字串
+    creds_json = os.getenv("GCP_CREDENTIALS")
+    if creds_json is None:
+        raise RuntimeError("❌ GCP_CREDENTIALS 未設定，請確認 GitHub Secrets 設定")
+
+    creds_dict = json.loads(creds_json)
+    creds = Credentials.from_service_account_info(creds_dict)
     gc = gspread.authorize(creds)
 
     SHEET_ID = "1BRfNr84btjJFPH9CXUiTMeojHGb16Y7vRf_D92kHKOU"
@@ -44,7 +52,7 @@ def write_to_sheet(farm, user):
         worksheet.insert_row(["日期時間", "牧場數量", "使用者數量", "數據來源"], 1)
 
     timestamp = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-    row = [timestamp, farm, user, "Playwright-Python"]
+    row = [timestamp, farm, user, "Playwright-GitHubActions"]
     worksheet.append_row(row, value_input_option='USER_ENTERED')
 
     fmt = cellFormat(numberFormat=numberFormat(type='DATE_TIME', pattern='yyyy/MM/dd HH:mm:ss'))
@@ -56,14 +64,14 @@ def notify_gas(farm, user):
     payload = {
         "farmCount": farm,
         "userCount": user,
-        "source": "Playwright-Python"
+        "source": "Playwright-GitHubActions"
     }
     r = requests.post(GAS_URL, json=payload)
     print("✅ 已通知 GAS，回應：", r.text)
 
 # ✅ 主程序放最後
 if __name__ == "__main__":
-    print("🐷 Triggered: 程式啟動中...")  # ✅ Debug 標記
+    print("🐷 Triggered: 程式啟動中...")
     farm, user = asyncio.run(scrape_pigepm())
     print("🐷 牧場數量：", farm)
     print("👥 使用者數量：", user)
