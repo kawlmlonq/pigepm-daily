@@ -2,7 +2,7 @@ name: Daily Pigepm Trigger
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 台灣早上 8 點（UTC+8）
+    - cron: '*/5 * * * *'  # 每 5 分鐘（UTC） 
   workflow_dispatch:
 
 jobs:
