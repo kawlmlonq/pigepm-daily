@@ -4,7 +4,7 @@ import asyncio
 import gspread
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from gspread_formatting import *
 import requests
 from google.oauth2.service_account import Credentials
@@ -42,7 +42,10 @@ def write_to_sheet(farm, user):
         raise ValueError("❌ 未偵測到 GCP_CREDENTIALS，請確認 GitHub Secrets 設定正確")
 
     creds_dict = json.loads(creds_json)
-    creds = Credentials.from_service_account_info(creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    creds = Credentials.from_service_account_info(
+        creds_dict,
+        scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    )
 
     gc = gspread.authorize(creds)
 
@@ -55,7 +58,10 @@ def write_to_sheet(farm, user):
     if worksheet.cell(1, 1).value != "日期時間":
         worksheet.insert_row(["日期時間", "牧場數量", "使用者數量", "數據來源"], 1)
 
-    timestamp = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    # ✅ 不使用 pytz，改為 UTC+8
+    taipei_time = datetime.now(timezone.utc) + timedelta(hours=8)
+    timestamp = taipei_time.strftime("%Y/%m/%d %H:%M:%S")
+
     row = [timestamp, farm, user, "Playwright-GitHubActions"]
     worksheet.append_row(row, value_input_option='USER_ENTERED')
 
