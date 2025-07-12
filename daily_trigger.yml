@@ -23,4 +23,5 @@ jobs:
           playwright install chromium
 
       - name: Run pigepm script
-        run: python pigepm_auto.py
+        run: python pigepm_auto_script.py
+
